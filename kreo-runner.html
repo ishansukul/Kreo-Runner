@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kreo Runner</title>
+    <style>
+        body { 
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #75559f;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        #gameCanvas {
+            border: 2px solid white;
+            background-color: #75559f;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: white;
+            color: #75559f;
+            border: none;
+            border-radius: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="300"></canvas>
+        <div id="score">Score: 0</div>
+        <div id="startScreen">
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const startScreen = document.getElementById('startScreen');
+
+        // Load the motif image
+        const motifImage = new Image();
+        motifImage.src = '/motif3x.png';
+
+        let score = 0;
+        let gameLoop;
+        let isGameRunning = false;
+
+        // Player
+        const player = {
+            x: 50,
+            y: canvas.height - 60,
+            width: 40,
+            height: 40,
+            jumping: false,
+            jumpForce: -15,
+            gravity: 0.8,
+            velocity: 0
+        };
+
+        // Obstacles
+        let obstacles = [];
+        const obstacleWidth = 20;
+        const obstacleHeight = 40;
+        const obstacleSpeed = 5;
+
+        function createObstacle() {
+            obstacles.push({
+                x: canvas.width,
+                y: canvas.height - obstacleHeight,
+                width: obstacleWidth,
+                height: obstacleHeight
+            });
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(motifImage, player.x, player.y, player.width, player.height);
+            ctx.restore();
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = 'white';
+            obstacles.forEach(obstacle => {
+                ctx.beginPath();
+                ctx.arc(
+                    obstacle.x + obstacle.width / 2,
+                    obstacle.y + obstacle.width / 2,
+                    obstacle.width / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            });
+        }
+
+        function updatePlayer() {
+            if (player.jumping) {
+                player.velocity += player.gravity;
+                player.y += player.velocity;
+
+                if (player.y > canvas.height - 60) {
+                    player.y = canvas.height - 60;
+                    player.jumping = false;
+                    player.velocity = 0;
+                }
+            }
+        }
+
+        function updateObstacles() {
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= obstacleSpeed;
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreElement.textContent = `Score: ${score}`;
+                }
+            });
+
+            if (Math.random() < 0.02) {
+                createObstacle();
+            }
+        }
+
+        function checkCollisions() {
+            return obstacles.some(obstacle => {
+                const dx = (obstacle.x + obstacle.width / 2) - (player.x + player.width / 2);
+                const dy = (obstacle.y + obstacle.width / 2) - (player.y + player.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < (obstacle.width / 2 + player.width / 2 - 5);
+            });
+        }
+
+        function gameOver() {
+            isGameRunning = false;
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2 - 30);
+            ctx.font = 'bold 24px Arial';
+            ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+            startScreen.style.display = 'block';
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            updatePlayer();
+            updateObstacles();
+
+            drawPlayer();
+            drawObstacles();
+
+            if (checkCollisions()) {
+                gameOver();
+            }
+        }
+
+        function jump() {
+            if (!player.jumping) {
+                player.jumping = true;
+                player.velocity = player.jumpForce;
+            }
+        }
+
+        function startGame() {
+            if (!isGameRunning) {
+                isGameRunning = true;
+                score = 0;
+                scoreElement.textContent = `Score: ${score}`;
+                obstacles = [];
+                player.y = canvas.height - 60;
+                player.jumping = false;
+                player.velocity = 0;
+                startScreen.style.display = 'none';
+                gameLoop = setInterval(update, 1000 / 60);
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                if (isGameRunning) {
+                    jump();
+                } else {
+                    startGame();
+                }
+            }
+        });
+
+        // Mobile touch support
+        document.addEventListener('touchstart', () => {
+            if (isGameRunning) {
+                jump();
+            } else {
+                startGame();
+            }
+        });
+    </script>
+</body>
+</html>
