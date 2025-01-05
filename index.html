@@ -9,7 +9,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #75559f;
+            background-color: black;
             font-family: Arial, sans-serif;
         }
         #gameContainer {
@@ -17,7 +17,7 @@
         }
         #gameCanvas {
             border: 2px solid white;
-            background-color: #75559f;
+            background-color: black;
         }
         #score {
             position: absolute;
@@ -39,7 +39,7 @@
             font-size: 16px;
             cursor: pointer;
             background-color: white;
-            color: #75559f;
+            color: black;
             border: none;
             border-radius: 0;
             font-weight: bold;
@@ -64,6 +64,13 @@
         // Load the motif image
         const motifImage = new Image();
         motifImage.src = '/motif3x.png';
+
+        motifImage.onload = () => {
+            console.log('Image loaded successfully');
+        };
+        motifImage.onerror = () => {
+            console.error('Error loading image. Check the file path.');
+        };
 
         let score = 0;
         let gameLoop;
@@ -98,10 +105,10 @@
 
         function drawPlayer() {
             ctx.save();
+            ctx.fillStyle = 'white';
             ctx.beginPath();
             ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
-            ctx.clip();
-            ctx.drawImage(motifImage, player.x, player.y, player.width, player.height);
+            ctx.fill();
             ctx.restore();
         }
 
@@ -172,6 +179,7 @@
         }
 
         function update() {
+            console.log('Game is updating...');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             updatePlayer();
