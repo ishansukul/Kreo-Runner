@@ -9,7 +9,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: black;
+            background-color: #75559f;
             font-family: Arial, sans-serif;
         }
         #gameContainer {
@@ -17,7 +17,7 @@
         }
         #gameCanvas {
             border: 2px solid white;
-            background-color: black;
+            background-color: #75559f;
         }
         #score {
             position: absolute;
@@ -39,7 +39,7 @@
             font-size: 16px;
             cursor: pointer;
             background-color: white;
-            color: black;
+            color: #75559f;
             border: none;
             border-radius: 0;
             font-weight: bold;
@@ -61,16 +61,38 @@
         const scoreElement = document.getElementById('score');
         const startScreen = document.getElementById('startScreen');
 
-        // Load the motif image
-        const motifImage = new Image();
-        motifImage.src = '/motif3x.png';
+        // Create motif within circle
+        function drawMotif(x, y, scale = 1) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
 
-        motifImage.onload = () => {
-            console.log('Image loaded successfully');
-        };
-        motifImage.onerror = () => {
-            console.error('Error loading image. Check the file path.');
-        };
+            // Draw containing circle
+            ctx.beginPath();
+            ctx.arc(20, 20, 20, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Draw motif in purple
+            ctx.beginPath();
+            // Start from left edge
+            ctx.moveTo(5, 20);
+            // Draw first semicircle (left)
+            ctx.arc(12.5, 20, 7.5, Math.PI, 0, false);
+            // Draw second semicircle (right)
+            ctx.arc(27.5, 20, 7.5, Math.PI, 0, false);
+            // Connect to top semicircle
+            ctx.lineTo(35, 20);
+            // Draw top semicircle
+            ctx.arc(20, 12.5, 7.5, 0, Math.PI, false);
+            // Close path
+            ctx.closePath();
+            
+            ctx.fillStyle = '#75559f';
+            ctx.fill();
+            
+            ctx.restore();
+        }
 
         let score = 0;
         let gameLoop;
@@ -104,12 +126,7 @@
         }
 
         function drawPlayer() {
-            ctx.save();
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+            drawMotif(player.x, player.y, 1);
         }
 
         function drawObstacles() {
@@ -117,9 +134,9 @@
             obstacles.forEach(obstacle => {
                 ctx.beginPath();
                 ctx.arc(
-                    obstacle.x + obstacle.width / 2,
-                    obstacle.y + obstacle.width / 2,
-                    obstacle.width / 2,
+                    obstacle.x + obstacle.width/2,
+                    obstacle.y + obstacle.width/2,
+                    obstacle.width/2,
                     0,
                     Math.PI * 2
                 );
@@ -157,10 +174,10 @@
 
         function checkCollisions() {
             return obstacles.some(obstacle => {
-                const dx = (obstacle.x + obstacle.width / 2) - (player.x + player.width / 2);
-                const dy = (obstacle.y + obstacle.width / 2) - (player.y + player.height / 2);
+                const dx = (obstacle.x + obstacle.width/2) - (player.x + player.width/2);
+                const dy = (obstacle.y + obstacle.width/2) - (player.y + player.height/2);
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                return distance < (obstacle.width / 2 + player.width / 2 - 5);
+                return distance < (obstacle.width/2 + player.width/2 - 5);
             });
         }
 
@@ -179,12 +196,11 @@
         }
 
         function update() {
-            console.log('Game is updating...');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            
             updatePlayer();
             updateObstacles();
-
+            
             drawPlayer();
             drawObstacles();
 
